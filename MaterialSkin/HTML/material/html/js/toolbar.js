@@ -155,7 +155,6 @@ Vue.component('lms-toolbar', {
 <v-snackbar v-model="snackbar.show" :multi-line="true" :timeout="snackbar.timeout ? snackbar.timeout : 2500" :color="snackbar.color" top>{{ snackbar.msg }}</v-snackbar>
 </div>
     `,
-    props: ['desktop'],
     data() {
         return { songInfo:undefined,
                  playlist: { count: undefined, duration: undefined, timestamp: undefined },
@@ -490,6 +489,9 @@ Vue.component('lms-toolbar', {
         },
         isNowPlayingPage() {
             return this.$store.state.page == 'now-playing'
+        },
+        desktop() {
+            return this.$store.state.desktop
         }
     },
     filters: {
@@ -508,7 +510,7 @@ Vue.component('lms-toolbar', {
     },
     watch: {
         'playerVolume.val': function(newVal) {
-            if (this.desktop && newVal>=0 && this.playerVolume.current !== newVal) {
+            if (this.$store.state.desktop && newVal>=0 && this.playerVolume.current !== newVal) {
                 this.playerVolume.prev = this.playerVolume.current;
                 this.playerVolume.current = newVal;
                 this.playerVolume.lastUpdate = new Date();

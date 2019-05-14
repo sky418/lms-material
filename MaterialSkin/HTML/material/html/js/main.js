@@ -14,7 +14,10 @@ var app = new Vue({
                             volume: false, manage: false, rndmix: false, favorite: false, rating: false, sleep: false } }
     },
     created() {
-        parseQueryParams();
+        var uiMode = parseQueryParams();
+        if (undefined==uiMode) {
+            uiMode = getLocalStorageVal("uiMode", "mobile");
+        }
         this.$store.commit('initUiSettings');
 
         bus.$on('dlg.open', function(name, a, b) {
@@ -23,6 +26,10 @@ var app = new Vue({
                 bus.$emit(name+".open", a, b);
             });
         }.bind(this));
+
+        this.splitterPercent = parseInt(getLocalStorageVal("splitter", "50"));
+        this.splitter = this.splitterPercent;
+        document.documentElement.style.setProperty('--splitter-pc', this.splitter);
 
         initApp(this);
         this.openDialogs = 0;
@@ -34,6 +41,13 @@ var app = new Vue({
                 this.openDialogs--;
             }
         }.bind(this));
+
+        this.$nextTick(function () {
+           this.$store.commit('setUiMode', uiMode);
+        });
+        bus.$on('setDesktopLayout', function(desktopLayout) {
+            this.$store.commit('setDesktopLayout', desktopLayout);
+        }.bind(this));
     },
     computed: {
         darkUi() {
@@ -44,11 +58,17 @@ var app = new Vue({
         },
         page() {
             return this.$store.state.page;
+        },
+        desktop() {
+            return this.$store.state.desktop;
         }
+    },
+    components: {
+        VueSplitter
     },
     methods: {
         swipe(ev, direction) {
-            if (this.openDialogs>0) {
+            if (this.$store.state.desktop || this.openDialogs>0) {
                 return;
             }
             if (this.$store.state.page=='now-playing') {
@@ -79,7 +99,25 @@ var app = new Vue({
                     this.$store.commit('setPage', 'now-playing');
                 }
             }
+        },
+        splitterResized(val) {
+            if (!this.$store.state.desktop) {
+                return;
+            }
+            var f = Math.floor(val/2)*2;
+            if (f!=this.splitter) {
+                setLocalStorageVal("splitter", f);
+                document.documentElement.style.setProperty('--splitter-pc', f);
+                this.splitter=f;
+                if (!this.splitterChangedAnimationFrameReq) {
+                    this.scrollAnimationFrameReq = window.requestAnimationFrame(() => {
+                        bus.$emit('splitterChanged');
+                        this.scrollAnimationFrameReq = undefined;
+                    });
+                }
+            }
         }
+
     },
     store,
     lmsServer

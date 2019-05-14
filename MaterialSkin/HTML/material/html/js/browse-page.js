@@ -349,7 +349,6 @@ var lmsBrowse = Vue.component("lms-browse", {
  </v-menu>
 </div>
       `,
-    props: [ 'desktop' ],
     data() {
         return {
             current: undefined,
@@ -413,7 +412,7 @@ var lmsBrowse = Vue.component("lms-browse", {
         }
         this.grid = {use:false, numColumns:0, size:GRID_SIZES.length-1, rows:[], few:false};
 
-        if (!this.desktop) {
+        if (!this.$store.state.desktop) {
             this.isActive = this.$store.state.page=='browse';
             // Clicking on 'browse' nav button whilst in browse page goes back.
             bus.$on('nav', function(page) {
@@ -1103,7 +1102,7 @@ var lmsBrowse = Vue.component("lms-browse", {
                 lmsCommand(this.playerId(), command.command).then(({data}) => {
                     logJsonMessage("RESP", data);
                     bus.$emit('refreshStatus');
-                    if (!this.desktop) {
+                    if (!this.$store.state.desktop) {
                         this.$store.commit('setPage', 'now-playing');
                     }
                 }).catch(err => {
@@ -1118,7 +1117,7 @@ var lmsBrowse = Vue.component("lms-browse", {
                 lmsCommand(this.playerId(), command.command).then(({data}) => {
                     logJsonMessage("RESP", data);
                     bus.$emit('refreshStatus');
-                    if (!this.desktop) {
+                    if (!this.$store.state.desktop) {
                         if (act===PLAY_ACTION) {
                             this.$store.commit('setPage', 'now-playing');
                         } else if (act===ADD_ACTION && (undefined==suppressNotification || !suppressNotification)) {

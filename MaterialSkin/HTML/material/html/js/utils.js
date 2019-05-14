@@ -264,6 +264,14 @@ function setTheme(dark) {
     }
 }
 
+function setLayoutCss(desktop) {
+    if (desktop) {
+        changeCss("html/css/desktop.css?r=" + LMS_MATERIAL_REVISION, 1);
+    } else {
+        changeCss("html/css/mobile.css?r=" + LMS_MATERIAL_REVISION, 1);
+    }
+}
+
 function serverSettings(page) {
     window.open('../Default/settings/index.html' + (page ? '?activePage='+page : ''), '_blank');
 }
@@ -333,13 +341,13 @@ function adjustVolume(vol, inc) {
 }
 
 function parseQueryParams() {
+    var uiMode = undefined;
     var queryString = window.location.href.substring(window.location.href.indexOf('?')+1);
     var hash = queryString.indexOf('#');
     if (hash>0) {
         queryString=queryString.substring(0, hash);
     }
     var query = queryString.split('&');
-
 
     for (var i = query.length - 1; i >= 0; i--) {
         var kv = query[i].split('=');
@@ -351,10 +359,13 @@ function parseQueryParams() {
             for (var j=0, len=parts.length; j<len; ++j) {
                 debug.add(parts[j]);
             }
-        } else if ("clearcache"==kv[0] && "true"==kv[1]) {
+        } else if ("clearcache"==kv[0] && "true"==c) {
             clearListCache(true);
+        } else if ("mode"==kv[0]) {
+            uiMode = kv[1];
         }
     }
+    return uiMode;
 }
 
 function isLandscape() {

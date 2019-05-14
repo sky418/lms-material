@@ -265,7 +265,6 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
  </div>
 </div></div>
 `,
-    props: [ 'desktop' ],
     data() {
         return { coverUrl:undefined,
                  playerStatus: {
@@ -289,7 +288,7 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
                 };
     },
     mounted() {
-        if (this.desktop) {
+        if (this.$store.state.desktop) {
             this.info.showTabs=getLocalStorageBool("showTabs", false);
             bus.$on('largeView', function(val) {
                 if (val) {
@@ -514,7 +513,7 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
         trackInfo() {
             this.info.show=false;
             this.largeView=false;
-            if (this.desktop) {
+            if (this.$store.state.desktop) {
                 bus.$emit('trackInfo', {id: "track_id:"+this.playerStatus.current.id, title:this.playerStatus.current.title, image: this.coverUrl});
             } else {
                 this.$store.commit('setPage', 'browse');
@@ -645,7 +644,7 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
                     elem.style.backgroundImage = "url('"+(this.$store.state.infoBackdrop ? this.coverUrl : "") +"')";
                 }
             });
-            if (this.desktop && !this.showTabs) {
+            if (this.$store.state.desktop && !this.showTabs) {
                 this.fetchLyrics();
                 this.fetchBio();
                 this.fetchReview();
@@ -683,7 +682,7 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
             setLocalStorageVal("showTotal", this.showTotal);
         },
         setBgndCover() {
-            if (this.page && (!this.desktop || this.largeView)) {
+            if (this.page && (!this.$store.state.desktop || this.largeView)) {
                 setBgndCover(this.page, this.$store.state.nowPlayingBackdrop ? this.coverUrl : undefined, this.$store.state.darkUi);
             }
         },
@@ -811,6 +810,9 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
                 return (this.playerStatus.current.tracknum>9 ? this.playerStatus.current.tracknum : ("0" + this.playerStatus.current.tracknum))+" "+this.playerStatus.current.title;
             }
             return this.playerStatus.current.title;
+        },
+        desktop() {
+            return this.$store.state.desktop;
         }
     },
     beforeDestroy() {

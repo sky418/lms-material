@@ -150,7 +150,9 @@ const store = new Vuex.Store({
         maxRating: 5,
         showPlayerMenuEntry: false,
         lsAndNotif:'playing',
-        page:'browse'
+        page:'browse',
+        desktop: false,
+        uiMode: 'mobile'
     },
     mutations: {
         setPlayers(state, players) {
@@ -325,6 +327,24 @@ const store = new Vuex.Store({
             if (val!=state.page) {
                 state.page = val;
                 setLocalStorageVal('page', val);
+            }
+        },
+        setUiMode(state, val) {
+            if (val!=state.uiMode && ["auto", "desktop", "mobile"].indexOf(val)>=0) {
+                state.uiMode = val;
+                setLocalStorageVal("uiMode", val);
+                if (!setAutoLayout(val == "auto", state.desktop)) {
+                    setLayoutCss(val);
+                    state.desktop = "desktop" == val;
+                }
+            }
+        },
+        setDesktopLayout(state, val) {
+            if (val!=state.desktop) {
+                window.requestAnimationFrame(() => { 
+                    state.desktop = val;
+                    setLayoutCss(state.desktop);
+                });
             }
         }
     }

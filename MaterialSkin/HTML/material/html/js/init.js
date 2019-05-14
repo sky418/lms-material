@@ -9,12 +9,12 @@ var autoLayout = false;
 var isMobileBrowser = false;
 var landscape = undefined;
 var wide = undefined;
-function checkLayout() {
+function checkLayout(currentlyIsDesktopLayout) {
     if (autoLayout && !isMobileBrowser) { // auto-layout broken on iPad #109
-        if (window.innerWidth<600 && window.location.href.indexOf("/desktop")>1) {
-            window.location.href = "mobile";
-        } else if (window.innerWidth>=600 && /*(!isMobileBrowser || window.innerHeight>=600) &&*/ window.location.href.indexOf("/mobile")>1) {
-            window.location.href = "desktop";
+        if (window.innerWidth<600 && currentlyIsDesktopLayout) {
+            bus.$emit("setDesktopLayout", false);
+        } else if (window.innerWidth>=600 && /*(!isMobileBrowser || window.innerHeight>=600) &&*/ !currentlyIsDesktopLayout) {
+            bus.$emit("setDesktopLayout", true);
         }
     }
 
@@ -25,9 +25,10 @@ function checkLayout() {
     }
 }
 
-function setAutoLayout(al) {
+function setAutoLayout(al, currentlyIsDesktopLayout) {
     autoLayout = al;
-    checkLayout();
+    checkLayout(currentlyIsDesktopLayout);
+    return autoLayout && isMobileBrowser; // auto-layout broken on iPad #109
 }
 
 function checkEntryFocus() {
@@ -81,8 +82,6 @@ function initApp(app) {
         }
     });
 
-    setAutoLayout(getLocalStorageVal("layout", "auto") == "auto");
-
     // Work-around 100vh behaviour in mobile chrome
     // See https://css-tricks.com/the-trick-to-viewport-units-on-mobile/
     let vh = window.innerHeight * 0.01;
@@ -104,7 +103,7 @@ function initApp(app) {
             timeout = undefined;
             if (Math.abs(lastWinWidth-window.innerWidth)>=3) {
                 lastWinWidth = window.innerWidth;
-                checkLayout();
+                checkLayout(app.$store.state.desktop);
                 bus.$emit('windowWidthChanged');
             }
             checkEntryFocus();

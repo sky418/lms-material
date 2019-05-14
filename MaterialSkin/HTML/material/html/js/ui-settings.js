@@ -31,7 +31,7 @@ Vue.component('lms-ui-settings', {
     <v-divider></v-divider>
 
     <v-list-tile>
-     <v-select :items="layoutItems" :label="i18n('Application layout')" v-model="layout" item-text="label" item-value="key"></v-select>
+     <v-select :items="uiModeItems" :label="i18n('Application layout')" v-model="uiMode" item-text="label" item-value="key"></v-select>
     </v-list-tile>
     <v-divider></v-divider>
 
@@ -213,7 +213,6 @@ Vue.component('lms-ui-settings', {
  </v-card>
 </v-dialog>
 `,
-    props: [ 'desktop' ],
     data() {
         return {
             show: false,
@@ -239,8 +238,8 @@ Vue.component('lms-ui-settings', {
             albumSorts:[],
             library: null,
             libraries: [],
-            layout: null,
-            layoutItems: [],
+            uiMode: null,
+            uiModeItems: [],
             volumeSteps: [ { value: 1,  label: "1%"},
                            { value: 2,  label: "2%"},
                            { value: 5,  label: "5%"},
@@ -279,8 +278,7 @@ Vue.component('lms-ui-settings', {
             this.serverMenus = this.$store.state.serverMenus;
             this.showMenuAudio = this.$store.state.showMenuAudio;
             this.showMenuAudioQueue = this.$store.state.showMenuAudioQueue;
-            this.layout = getLocalStorageVal("layout", "auto");
-            this.layoutOrig = this.layout;
+            this.uiMode = this.$store.state.uiMode;
             this.volumeStep = volumeStep;
             this.showPlayerMenuEntry = this.$store.state.showPlayerMenuEntry;
             this.show = true;
@@ -330,7 +328,7 @@ Vue.component('lms-ui-settings', {
                 { key:"yearalbum",       label:i18n("Year, Album")},
                 { key:"yearartistalbum", label:i18n("Year, Artist, Album")}
                 ];
-            this.layoutItems=[
+            this.uiModeItems=[
                 { key:"auto",    label:i18n("Automatic")},
                 { key:"desktop", label:i18n("Use desktop layout")},
                 { key:"mobile",  label:i18n("Use mobile layout")}
@@ -373,14 +371,7 @@ Vue.component('lms-ui-settings', {
             if (this.libraries.length>0) {
                 this.$store.commit('setLibrary', this.library);
             }
-            if (this.layout != this.layoutOrig) {
-                setLocalStorageVal("layout", this.layout);
-                if ( (!this.desktop && "desktop"==this.layout) || (this.desktop && "mobile"==this.layout) ) {
-                    window.location.href = this.layout;
-                } else {
-                    setAutoLayout(this.layout == "auto");
-                }
-            }
+            this.$store.commit('setUiMode', this.uiMode);
         },
         saveAsDefault() {
             this.$confirm(i18n("Save the current settings as default for new users?")+

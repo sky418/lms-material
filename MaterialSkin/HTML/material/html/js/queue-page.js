@@ -215,7 +215,6 @@ var lmsQueue = Vue.component("lms-queue", {
  </v-menu>
 </div>
 `,
-    props: [ 'desktop' ],
     data() {
         return {
             items: [],
@@ -236,6 +235,9 @@ var lmsQueue = Vue.component("lms-queue", {
     computed: {
         darkUi () {
             return this.$store.state.darkUi
+        },
+        desktop() {
+            return this.$store.state.desktop
         }
     },
     created() {
@@ -365,7 +367,7 @@ var lmsQueue = Vue.component("lms-queue", {
             this.setBgndCover();
         });
 
-        if (!this.desktop) {
+        if (!this.$store.state.desktop) {
             this.isActive = this.$store.state.page=='queue';
             bus.$on('nav', function(page) {
                 if ('queue'==page) {
@@ -490,7 +492,7 @@ var lmsQueue = Vue.component("lms-queue", {
             } else if (PQ_REMOVE_ACTION===act) {
                 bus.$emit('playerCommand', ["playlist", "delete", index]);
             } else if (PQ_MORE_ACTION===act) {
-                if (this.desktop) {
+                if (this.$store.state.desktop) {
                     bus.$emit('trackInfo', item);
                 } else {
                     this.$store.commit('setPage', 'browse');
