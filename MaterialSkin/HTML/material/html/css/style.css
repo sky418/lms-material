@@ -86,6 +86,10 @@ a {
  margin-right:8px !important;
 }
 
+.lms-image-grid table {
+ border-spacing:0px !important;
+}
+
 .lms-image-grid table td .v-card {
  background-color:rgba(0,0,0,0) !important
 }
@@ -111,7 +115,7 @@ a {
 
 .image-grid-item {
  padding:0px;
- margin:0px 6px 0px 2px; /* t, r, b, l */
+ margin:0px 4px 0px 4px; /* t, r, b, l */
  background-color:rgba(0,0,0,0) !important;
  cursor:pointer;
 }
@@ -133,90 +137,144 @@ a {
 }
 
 /* -- */
-.image-grid-0 td .image-grid-item-img {
- height:150px !important;
- width:150px !important;
+.image-grid-j td .image-grid-item-img {
+ height:175px !important;
+ width:175px !important;
 }
 
-.image-grid-0 td .image-grid-text {
+.image-grid-j td .image-grid-text {
+ width:158px;
+}
+
+.image-grid-j td .image-grid-item {
+ width:183px;
+ height:235px;
+}
+
+.image-grid-i td .image-grid-item-img {
+ height:170px !important;
+ width:170px !important;
+}
+
+.image-grid-i td .image-grid-text {
+ width:153px;
+}
+
+.image-grid-i td .image-grid-item {
+ width:178px;
+ height:230px;
+}
+.image-grid-h td .image-grid-item-img {
+ height:165px !important;
+ width:165px !important;
+}
+
+.image-grid-h td .image-grid-text {
+ width:148px;
+}
+
+.image-grid-h td .image-grid-item {
+ width:173px;
+ height:225px;
+}
+
+.image-grid-g td .image-grid-item-img {
+ height:160px !important;
+ width:160px !important;
+}
+
+.image-grid-g td .image-grid-text {
+ width:143px;
+}
+
+.image-grid-g td .image-grid-item {
+ width:168px;
+ height:220px;
+}
+
+.image-grid-f td .image-grid-item-img {
+ height:155px !important;
+ width:155px !important;
+}
+
+.image-grid-f td .image-grid-text {
  width:138px;
 }
 
-.image-grid-0 td .image-grid-item {
- width:158px;
- height:210px;
+.image-grid-f td .image-grid-item {
+ width:163px;
+ height:215px;
 }
-/*
-.image-grid-316 td .image-grid-item-img {
+
+.image-grid-e td .image-grid-item-img {
  height:145px !important;
  width:145px !important;
 }
 
-.image-grid-316 td .image-grid-text {
+.image-grid-e td .image-grid-text {
  width:133px;
 }
 
-.image-grid-316 td .image-grid-item {
+.image-grid-e td .image-grid-item {
  width:153px !important;
  height:205px !important;
 }
-*/
-.image-grid-306 td .image-grid-item-img {
+
+.image-grid-d td .image-grid-item-img {
  height:140px !important;
  width:140px !important;
 }
 
-.image-grid-306 td .image-grid-text {
+.image-grid-d td .image-grid-text {
  width:128px;
 }
 
-.image-grid-306 td .image-grid-item {
+.image-grid-d td .image-grid-item {
  width:148px !important;
  height:200px !important;
 }
-/*
-.image-grid-296 td .image-grid-item-img {
+
+.image-grid-c td .image-grid-item-img {
  height:135px !important;
  width:135px !important;
 }
 
-.image-grid-296 td .image-grid-text {
+.image-grid-c td .image-grid-text {
  width:123px;
 }
 
-.image-grid-296 td .image-grid-item {
+.image-grid-c td .image-grid-item {
  width:143px !important;
  height:195px !important;
 }
-*/
-.image-grid-286 td .image-grid-item-img {
+
+.image-grid-b td .image-grid-item-img {
  height:130px !important;
  width:130px !important;
 }
 
-.image-grid-286 td .image-grid-text {
+.image-grid-b td .image-grid-text {
  width:118px;
 }
 
-.image-grid-286 td .image-grid-item {
+.image-grid-b td .image-grid-item {
  width:138px !important;
  height:190px !important;
 }
-/*
-.image-grid-276 td .image-grid-item-img {
+
+.image-grid-a td .image-grid-item-img {
  height:125px !important;
  width:125px !important;
 }
 
-.image-grid-276 td .image-grid-text {
+.image-grid-a td .image-grid-text {
  width:113px;
 }
 
-.image-grid-276 td .image-grid-item {
+.image-grid-a td .image-grid-item {
  width:133px !important;
  height:185px !important;
 }
-*/
 /* -- */
 
 .v-avatar img {
@@ -324,7 +382,7 @@ a {
  margin-right:20px;
 }
 
-.v-list, .v-list>div, .v-list__tile, .v-list__tile__title, .v-list__tile__sub-title, .vue-recycle-scroller, .lms-list, .lms-list-sub, .v-card, .v-progress-linear__bar, .v-progress-linear__bar__determinate, .v-progress-linear__background {
+.v-list, .v-list>div, .v-list__tile, .v-list__tile__title, .v-list__tile__sub-title, .vue-recycle-scroller, .lms-list, .lms-list-sub, .v-card, .v-progress-linear__bar, .v-progress-linear__bar__determinate, .v-progress-linear__background, .v-btn__content {
  transition:none !important;
 }
 
@@ -816,7 +874,6 @@ div.v-subheader {
  padding:4px 0px 4px 0px; /* t, r, b, l */
  margin:0px !important;
  width:32px; /* must match that in browse-page.js */
- background-color:#444;
  float:left;
  display:grid;
  grid-template-rows:repeat(auto-fit, minmax(1em, 1fr));
@@ -830,4 +887,8 @@ div.v-subheader {
  vertical-align:middle;
  cursor:pointer;
  opacity:0.5;
+}
+
+@media screen and (max-width: 550px) {
+    #home-button{display:none;}
 }

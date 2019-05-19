@@ -28,12 +28,18 @@ const SELECT_ACTION           = 18;
 const UNSELECT_ACTION         = 19;
 const RATING_ACTION           = 20;
 const SEARCH_LIB_ACTION       = 21;
-const GRID_SIZES = [ //{vw:276, iw:133, ih:185, clz:"image-grid-276"},
-                     {vw:286, iw:138, ih:190, clz:"image-grid-286"},
-                     //{vw:296, iw:143, ih:195, clz:"image-grid-296"},
-                     {vw:306, iw:148, ih:200, clz:"image-grid-306"},
-                     //{vw:316, iw:153, ih:205, clz:"image-grid-316"},
-                     {vw:0,   iw:158, ih:210, clz:"image-grid-0"} ];
+const USE_GRID_ACTION         = 22;
+const USE_LIST_ACTION         = 23;
+const GRID_SIZES = [ {iw:133, ih:185, clz:"image-grid-a"},
+                     {iw:138, ih:190, clz:"image-grid-b"},
+                     {iw:143, ih:195, clz:"image-grid-c"},
+                     {iw:148, ih:200, clz:"image-grid-d"},
+                     {iw:153, ih:205, clz:"image-grid-e"},
+                     {iw:158, ih:210, clz:"image-grid-f"},
+                     {iw:163, ih:215, clz:"image-grid-g"},
+                     {iw:168, ih:220, clz:"image-grid-h"},
+                     {iw:173, ih:225, clz:"image-grid-i"},
+                     {iw:178, ih:230, clz:"image-grid-j"} ];
 
 var B_ACTIONS=[
     {cmd:"play",       icon:"play_circle_outline"},
@@ -57,7 +63,9 @@ var B_ACTIONS=[
     {cmd:"select",     icon:"check_box_outline_blank"},
     {cmd:"unselect",   icon:"check_box"},
     {cmd:"rating",     icon:"stars"},
-    {cmd:"search-lib", icon:"search"}
+    {cmd:"search-lib", icon:"search"},
+    {cmd:"use-grid",   icon:"grid_on"},
+    {cmd:"use-list",   icon:"grid_off"}
 ];
 
 const MAX_GRID_TEXT_LEN = 80;
@@ -79,7 +87,7 @@ const TOP_APPS_ID  = TOP_ID_PREFIX+"apps";
 const TOP_RADIO_ID  = TOP_ID_PREFIX+"ra";
 const TOP_REMOTE_ID = TOP_ID_PREFIX+"rml";
 const TOP_CDPLAYER_ID = TOP_ID_PREFIX+"cdda";
-const ALBUM_TAGS = "tags:jlyas";
+const ALBUM_TAGS = "tags:jlyasS";
 const TRACK_TAGS = "tags:ACdts";
 const SORT_KEY = "sort:";
 const SECTION_APPS = 1;
@@ -89,8 +97,10 @@ const SECTION_PLAYLISTS = 4;
 const GROUP_PINNED = 0;
 const GROUP_MY_MUSIC = 1;
 const GROUP_OTHER_MUSIC = 2;
-const CONDUCTOR_GENRES = new Set(["Classical"]);
-const COMPOSER_GENRES = new Set(["Classical", "Jazz"]);
+const CONDUCTOR_GENRES = new Set(["Classical", "Avant-Garde", "Baroque", "Chamber Music", "Chant", "Choral", "Classical Crossover",
+                                  "Early Music",  "High Classical", "Impressionist", "Medieval", "Minimalism","Modern Composition",
+                                  "Opera", "Orchestral", "Renaissance", "Romantic", "Wedding Music"]);
+const COMPOSER_GENRES = new Set(["Jazz"]);
 
 var lmsBrowse = Vue.component("lms-browse", {
     template: `
@@ -130,8 +140,8 @@ var lmsBrowse = Vue.component("lms-browse", {
    <v-btn :title="trans.cancel" flat icon class="toolbar-button" @click="clearSelection()"><v-icon>cancel</v-icon></v-btn>
   </v-layout>
   <v-layout v-else>
-   <v-btn flat icon @click="goHome()" class="toolbar-button"><v-icon>home</v-icon></v-btn>
-   <v-btn flat icon @click="goBack()" class="toolbar-button"><v-icon>arrow_back</v-icon></v-btn>
+   <v-btn flat icon @click="goHome()" class="toolbar-button" id="home-button"><v-icon>home</v-icon></v-btn>
+   <v-btn flat icon v-longpress="backBtnPressed" class="toolbar-button"><v-icon>arrow_back</v-icon></v-btn>
    <v-layout row wrap @click="showHistory($event)" v-if="headerSubTitle" v-bind:class="{pointer : history.length>1}">
     <v-flex xs12 class="ellipsis subtoolbar-title">{{headerTitle}}</v-flex>
     <v-flex xs12 class="ellipsis subtoolbar-subtitle subtext">{{headerSubTitle}}</v-flex>
@@ -157,7 +167,7 @@ var lmsBrowse = Vue.component("lms-browse", {
    </template>
   </div>
   <div class="lms-image-grid noselect bgnd-cover" id="browse-grid" style="overflow:auto;" v-bind:class="{'lms-image-grid-jump': filteredJumplist.length>1 && items.length>10}">
-  <RecycleScroller v-if="items.length>LMS_MIN_GRID_SCROLLER_ITEMS" :items="grid.rows" :item-size="GRID_SIZES[grid.size].ih" page-mode key-field="id">
+  <RecycleScroller v-if="items.length>LMS_MAX_NON_SCROLLER_ITEMS" :items="grid.rows" :item-size="GRID_SIZES[grid.size].ih" page-mode key-field="id">
    <table slot-scope="{item, index}" :class="['full-width', GRID_SIZES[grid.size].clz]">
     <td align="center" style="vertical-align: top" v-for="(col, cidx) in item.cols" :key="col.id"><v-card flat align="left" class="image-grid-item">
      <div v-if="col.blank" class="image-grid-item"></div>
@@ -167,7 +177,7 @@ var lmsBrowse = Vue.component("lms-browse", {
       </v-btn>
       <img :key="items[col.id].image" :src="items[col.id].image" class="image-grid-item-img"></img>
       <div class="image-grid-text">{{items[col.id].title}}</div>
-      <div class="image-grid-text subtext">{{items[col.id].subtitle}}</div>
+      <div class="image-grid-text subtext" @click.stop="clickSubtitle(items[col.id], col.id, $event)">{{items[col.id].subtitle}}</div>
       <v-btn flat icon @click.stop="itemMenu(items[col.id], col.id, $event)" class="image-grid-btn">
        <v-icon>more_vert</v-icon>
       </v-btn>
@@ -188,7 +198,7 @@ var lmsBrowse = Vue.component("lms-browse", {
      </v-btn>
      <img v-lazy="items[col.id].image" class="image-grid-item-img"></img>
      <div class="image-grid-text">{{items[col.id].title}}</div>
-     <div class="image-grid-text subtext">{{items[col.id].subtitle}}</div>
+     <div class="image-grid-text subtext" @click.stop="clickSubtitle(items[col.id], col.id, $event)">{{items[col.id].subtitle}}</div>
      <v-btn flat icon v-if="items[col.id].menu && items[col.id].menu.length>0" @click.stop="itemMenu(items[col.id], col.id, $event)" class="image-grid-btn">
       <v-icon v-if="items[col.id].menu && items[col.id].menu.length>1">more_vert</v-icon>
       <v-icon v-else-if="items[col.id].menu && items[col.id].menu.length===1 && undefined==B_ACTIONS[items[col.id].menu[0]].svg" :title="B_ACTIONS[items[col.id].menu[0]].title">{{B_ACTIONS[items[col.id].menu[0]].icon}}</v-icon>
@@ -235,7 +245,7 @@ var lmsBrowse = Vue.component("lms-browse", {
    </v-list-tile>
   </template>
 
-  <RecycleScroller v-if="items.length>=LMS_MIN_LIST_SCROLLER_ITEMS" :items="items" :item-size="LMS_LIST_ELEMENT_SIZE" page-mode key-field="id">
+  <RecycleScroller v-if="items.length>LMS_MAX_NON_SCROLLER_ITEMS" :items="items" :item-size="LMS_LIST_ELEMENT_SIZE" page-mode key-field="id">
    <v-list-tile avatar @click="click(item, index, $event)" slot-scope="{item, index}">
     <v-list-tile-avatar v-if="item.selected || item.image" :tile="true" class="lms-avatar">
      <v-icon v-if="item.selected">check_box</v-icon>
@@ -246,7 +256,7 @@ var lmsBrowse = Vue.component("lms-browse", {
     <v-subheader v-if="item.header">{{item.header}}</v-subheader>
     <v-list-tile-content v-else>
      <v-list-tile-title>{{item.title}}</v-list-tile-title>
-      <v-list-tile-sub-title v-html="item.subtitle"></v-list-tile-sub-title>
+      <v-list-tile-sub-title v-html="item.subtitle" @click.stop="clickSubtitle(item, index, $event, $event)"></v-list-tile-sub-title>
     </v-list-tile-content>
 
     <v-list-tile-action v-if="item.menu" @click.stop="itemMenu(item, index, $event)">
@@ -299,7 +309,7 @@ var lmsBrowse = Vue.component("lms-browse", {
 
     <v-list-tile-content v-else>
      <v-list-tile-title v-html="item.title"></v-list-tile-title>
-     <v-list-tile-sub-title v-html="item.subtitle"></v-list-tile-sub-title>
+     <v-list-tile-sub-title v-html="item.subtitle" @click.stop="clickSubtitle(item, index, $event)"></v-list-tile-sub-title>
     </v-list-tile-content>
 
     <v-list-tile-action v-if="item.menu && item.menu.length>1" @click.stop="itemMenu(item, index, $event)">
@@ -390,8 +400,7 @@ var lmsBrowse = Vue.component("lms-browse", {
         this.options={artistImages: getLocalStorageBool('artistImages', false),
                       noGenreFilter: getLocalStorageBool('noGenreFilter', false),
                       noRoleFilter: getLocalStorageBool('noRoleFilter', false),
-                      pinned: new Set(),
-                      useGrid: this.$store.state.useGrid};
+                      pinned: new Set()};
         this.separateArtists=getLocalStorageBool('separateArtists', false);
         this.randomMix=getLocalStorageBool('randomMix', true);
         this.dynamicPlaylists=getLocalStorageBool('dynamicPlaylists', false);
@@ -445,6 +454,11 @@ var lmsBrowse = Vue.component("lms-browse", {
             this.itemAction(MORE_LIB_ACTION, item);
         }.bind(this));
 
+        bus.$on('browse', function(cmd, params, title) {
+            this.goHome();
+            this.fetchItems(this.replaceCommandTerms({command:cmd, params:params}), {cancache:false, id:"<>", title:title});
+        }.bind(this));
+
         bus.$on('refreshList', function(section) {
             if (this.current && this.current.section==section) {
                 this.refreshList();
@@ -485,6 +499,7 @@ var lmsBrowse = Vue.component("lms-browse", {
             B_ACTIONS[UNSELECT_ACTION].title=i18n("Un-select");
             B_ACTIONS[RATING_ACTION].title=i18n("Set rating");
             B_ACTIONS[SEARCH_LIB_ACTION].title=i18n("Search");
+            B_ACTIONS[USE_GRID_ACTION].title=B_ACTIONS[USE_LIST_ACTION].title=i18n("Toggle view");
             this.trans= { ok:i18n('OK'), cancel: i18n('Cancel'), pinned: i18n('Pinned Items'), selectMultiple:i18n("Select multiple items"),
                           addall:i18n("Add selection to queue"), playall:i18n("Play selection"), albumRating:i18n("Set rating for all tracks"),
                           deleteall:i18n("Delete all selected items"), removeall:i18n("Remove all selected items") };
@@ -582,13 +597,7 @@ var lmsBrowse = Vue.component("lms-browse", {
                   params: [ALBUM_TAGS, SORT_KEY+"new"],
                   icon: "new_releases",
                   type: "group",
-                  id: TOP_NEW_MUSIC_ID },
-                { title: i18n("Music Folder"),
-                  command: ["musicfolder"],
-                  params: ["type:audio", "tags:ds"],
-                  icon: "folder",
-                  type: "group",
-                  id: TOP_ID_PREFIX+"f" }
+                  id: TOP_NEW_MUSIC_ID }
                 ];
             otherPrev.forEach(i=> {
                 this.other.unshift(i);
@@ -596,7 +605,7 @@ var lmsBrowse = Vue.component("lms-browse", {
             if (undefined!=this.serverTop && this.serverTop.length>0) {
                 this.serverTop[0].title=this.top[0].title;
             } else {
-                this.serverTop=[this.top[0]];
+                this.serverTop=this.top;
             }
             if (this.history.length<1) {
                 this.items = this.getTop();
@@ -664,7 +673,7 @@ var lmsBrowse = Vue.component("lms-browse", {
                 this.tbarActions=[];
                 this.isTop = false;
                 var changedView = this.grid.use != resp.useGrid;
-                this.grid = {use: resp.useGrid, numColumns:0, size:GRID_SIZES.length-1, rows:[], few:false};
+                this.grid = {use: resp.canUseGrid && isSetToUseGrid(command), numColumns:0, size:GRID_SIZES.length-1, rows:[], few:false};
 
                 if (this.current && this.current.menu) {
                     for (var i=0, len=this.current.menu.length; i<len; ++i) {
@@ -701,6 +710,9 @@ var lmsBrowse = Vue.component("lms-browse", {
                 if (this.tbarActions.length==0 && SECTION_FAVORITES==this.current.section && this.current.isFavFolder) {
                     this.tbarActions=[ADD_FAV_ACTION];
                 }
+                if (resp.canUseGrid) {
+                    this.tbarActions.unshift(this.grid.use ? USE_GRID_ACTION : USE_LIST_ACTION);
+                }
                 if (this.listSize<0) {
                     this.listSize=this.items.length;
                 }
@@ -723,6 +735,11 @@ var lmsBrowse = Vue.component("lms-browse", {
             }
         },
         toggleGroup(group) {
+            // When clicking back button, seems click somtimes falls through to collapse a group
+            if (undefined!=this.lastBackBtnPress && ((new Date())-this.lastBackBtnPress)<250) {
+                return;
+            }
+            this.lastBackBtnPress = undefined;
             this.$set(this.collapsed, group, !this.collapsed[group]);
             setLocalStorageVal('collapsed', this.collapsed.join(","));
         },
@@ -748,6 +765,9 @@ var lmsBrowse = Vue.component("lms-browse", {
                     this.history.pop();
                     this.goBack(true);
                 }
+            } else if (command.command.length>3 && command.command[1]=="playlist" && command.command[2]=="play") {
+                bus.$emit('showMessage', item.title);
+                this.goBack(true);
             } else {
                 this.handleListResponse(item, command, resp);
             }
@@ -757,7 +777,7 @@ var lmsBrowse = Vue.component("lms-browse", {
         },
         doTextClick(item) {
             var command = this.buildCommand(item);
-            if (command.command.length==2 && ("items"==command.command[1] || "browsejive"==command.command[1])) {
+            if (command.command.length==2 && ("items"==command.command[1] || "browsejive"==command.command[1] || "jiveplaylistparameters"==command.command[1])) {
                 this.fetchingItems = true;
                 lmsList(this.playerId(), command.command, command.params, 0, LMS_BATCH_SIZE).then(({data}) => {
                     this.fetchingItems = false;
@@ -845,7 +865,7 @@ var lmsBrowse = Vue.component("lms-browse", {
                                         group: GROUP_MY_MUSIC,
                                         id: item.id+"conductors"});
                 }
-                if (COMPOSER_GENRES.has(item.title)) {
+                if (COMPOSER_GENRES.has(item.title) || CONDUCTOR_GENRES.has(item.title)) {
                     this.items.splice(0, 0, { title: i18n("Composers"),
                                         command: ["artists"],
                                         params: ["role_id:COMPOSER", item.params[0]],
@@ -871,15 +891,7 @@ var lmsBrowse = Vue.component("lms-browse", {
                     return;
                 }
 
-                if (this.$store.state.splitArtistsAndAlbums && canSplitIntoLetterGroups(item, command)) {
-                    var cmd = { command: command.command, params: ["tags:CCZs"]};
-                    if (command.params) {
-                        command.params.forEach(p => { if (!p.startsWith("tags:")) { cmd.params.push(p); } } );
-                    }
-                    this.fetchItems(cmd, item, 5);
-                } else {
-                    this.fetchItems(command, item);
-                }
+                this.fetchItems(command, item);
             }
         },
         showImage(index) {
@@ -946,15 +958,35 @@ var lmsBrowse = Vue.component("lms-browse", {
             }
         },
         itemAction(act, item, index, suppressNotification) {
-            if (act===RENAME_PL_ACTION) {
+            if (act==SEARCH_LIB_ACTION) {
+                this.dialog = { show:true, title:i18n("Search library"), ok: i18n("Search"), cancel:undefined,
+                                command:["search"], params:["tags:jlyAdt", "extended:1", "term:"+TERM_PLACEHOLDER], item:{title:i18n("Search"), id:TOP_SEARCH_ID}};
+            } else if (act===MORE_ACTION) {
+                this.fetchItems(this.buildCommand(item, B_ACTIONS[act].cmd), item);
+            } else if (act===MORE_LIB_ACTION) {
+                if (item.id) {
+                    if (item.id.startsWith("artist_id:")) {
+                        this.fetchItems({command: ["artistinfo", "items"], params: ["menu:1", item.id, "html:1"]}, item);
+                    } else if (item.id.startsWith("album_id:")) {
+                        this.fetchItems({command: ["albuminfo", "items"], params: ["menu:1", item.id, "html:1"]}, item);
+                    } else if (item.id.startsWith("track_id:")) {
+                        this.fetchItems({command: ["trackinfo", "items"], params: ["menu:1", item.id, "html:1"]}, item);
+                    } else if (item.id.startsWith("genre_id:")) {
+                        this.fetchItems({command: ["genreinfo", "items"], params: ["menu:1", item.id, "html:1"]}, item);
+                    }
+                }
+            } else if (act===PIN_ACTION) {
+                this.pin(item, true);
+            } else if (act===UNPIN_ACTION) {
+                this.pin(item, false);
+            } else if (!this.playerId()) {  // *************** NO PLAYER ***************
+                bus.$emit('showError', undefined, i18n("No Player"));
+            } else if (act===RENAME_PL_ACTION) {
                 this.dialog = { show:true, title:i18n("Rename playlist"), hint:item.value, value:item.title, ok: i18n("Rename"), cancel:undefined,
                                 command:["playlists", "rename", item.id, "newname:"+TERM_PLACEHOLDER]};
             } else if (act==RENAME_FAV_ACTION) {
                 this.dialog = { show:true, title:i18n("Rename favorite"), hint:item.value, value:item.title, ok: i18n("Rename"), cancel:undefined,
                                 command:["favorites", "rename", item.id, "title:"+TERM_PLACEHOLDER]};
-            } else if (act==SEARCH_LIB_ACTION) {
-                this.dialog = { show:true, title:i18n("Search library"), ok: i18n("Search"), cancel:undefined,
-                                command:["search"], params:["tags:jlyAdt", "extended:1", "term:"+TERM_PLACEHOLDER], item:{title:i18n("Search"), id:TOP_SEARCH_ID}};
             } else if (act==ADD_FAV_ACTION) {
                 bus.$emit('dlg.open', 'favorite', 'add');
             } else if (act==EDIT_FAV_ACTION) {
@@ -1056,24 +1088,6 @@ var lmsBrowse = Vue.component("lms-browse", {
                 }).catch(err => {
                     logAndShowError(err, undefined, ["albums"], params, 0, 1);
                 });
-            } else if (act===MORE_ACTION) {
-                this.fetchItems(this.buildCommand(item, B_ACTIONS[act].cmd), item);
-            } else if (act===MORE_LIB_ACTION) {
-                if (item.id) {
-                    if (item.id.startsWith("artist_id:")) {
-                        this.fetchItems({command: ["artistinfo", "items"], params: ["menu:1", item.id, "html:1"]}, item);
-                    } else if (item.id.startsWith("album_id:")) {
-                        this.fetchItems({command: ["albuminfo", "items"], params: ["menu:1", item.id, "html:1"]}, item);
-                    } else if (item.id.startsWith("track_id:")) {
-                        this.fetchItems({command: ["trackinfo", "items"], params: ["menu:1", item.id, "html:1"]}, item);
-                    } else if (item.id.startsWith("genre_id:")) {
-                        this.fetchItems({command: ["genreinfo", "items"], params: ["menu:1", item.id, "html:1"]}, item);
-                    }
-                }
-            } else if (act===PIN_ACTION) {
-                this.pin(item, true);
-            } else if (act===UNPIN_ACTION) {
-                this.pin(item, false);
             } else if (SELECT_ACTION===act) {
                 var idx=this.selection.indexOf(index);
                 if (idx<0) {
@@ -1145,6 +1159,14 @@ var lmsBrowse = Vue.component("lms-browse", {
                 this.menu={show:true, item:item, x:event.clientX, y:event.clientY, index:index};
             }
         },
+        clickSubtitle(item, index, event) {
+            if (!IS_MOBILE && item.id && item.artist_id && item.id.startsWith("album_id:")) {
+                this.fetchItems(this.replaceCommandTerms({command:["albums"], params:["artist_id:"+item.artist_id, "tags:jlys", SORT_KEY+ARTIST_ALBUM_SORT_PLACEHOLDER]}),
+                                {cancache:false, id:item.id, title:item.subtitle});
+            } else {
+                this.click(item, index, event);
+            }
+        },
         showHistory(event) {
             if (this.history.length>1) {
                 var history=[];
@@ -1155,7 +1177,34 @@ var lmsBrowse = Vue.component("lms-browse", {
             }
         },
         headerAction(act) {
-            this.itemAction(act, this.current);
+            if (USE_LIST_ACTION==act) {
+                this.changeLayout(true);
+            } else if (USE_GRID_ACTION==act) {
+                this.changeLayout(false);
+            } else {
+                this.itemAction(act, this.current);
+            }
+        },
+        changeLayout(useGrid) {
+            if (this.grid.use!=useGrid) {
+                this.grid.use=useGrid;
+                this.$nextTick(function () {
+                    this.setScrollElement();
+                    this.setBgndCover();
+                    this.layoutGrid();
+                    changeImageUrls(this.items, this.grid.use);
+                    setUseGrid(this.command, this.grid.use);
+                    var af = this.grid.use ? USE_LIST_ACTION : USE_GRID_ACTION;
+                    var at = this.grid.use ? USE_GRID_ACTION : USE_LIST_ACTION;
+                    for (var i=0, len=this.tbarActions.length; i<len; ++i) {
+                        if (this.tbarActions[i] == af) {
+                            this.tbarActions[i] = at;
+                            break;
+                        }
+                    }
+                    this.$forceUpdate(); // Otherwise tbarActions update is not always noticed
+                });
+            }
         },
         refreshList() {
             this.clearSelection();
@@ -1231,6 +1280,14 @@ var lmsBrowse = Vue.component("lms-browse", {
                 while (index<this.history.length-1) {
                     this.history.pop();
                 }
+                this.goBack();
+            }
+        },
+        backBtnPressed(home) {
+            this.lastBackBtnPress = new Date();
+            if (home) {
+                this.goHome();
+            } else {
                 this.goBack();
             }
         },
@@ -1872,17 +1929,20 @@ var lmsBrowse = Vue.component("lms-browse", {
                 return;
             }
 
+            const ITEM_BORDER = 8;
+            const JUMP_LIST_WIDTH = 32;
+            const VIEW_RIGHT_PADDING = 4;
             var changed = false;
-            var listWidth = this.pageElement.scrollWidth-(/*scrollbar*/ this.mobileBrowser ? 0 : 20) - (/*jumplist*/ this.filteredJumplist.length>1 && this.items.length>10 ? 32 :0) - /*padding-right*/4;
+            var listWidth = this.pageElement.scrollWidth- ((/*scrollbar*/ this.mobileBrowser ? 0 : 20) + (this.filteredJumplist.length>1 && this.items.length>10 ? JUMP_LIST_WIDTH :0) + VIEW_RIGHT_PADDING);
 
             // Calculate what grid item size we should use...
             var size = 0;
-            for (var i=1; i<GRID_SIZES.length && listWidth>GRID_SIZES[i-1].vw; ++i) {
+            for (var i=1; i<GRID_SIZES.length && listWidth>((GRID_SIZES[i].iw+ITEM_BORDER)*2); ++i) {
                 size = i;
             }
 
             // How many columns?
-            var numColumns = Math.min(Math.floor(listWidth/GRID_SIZES[size].iw), this.items.length);
+            var numColumns = Math.min(Math.floor(listWidth/(GRID_SIZES[size].iw+ITEM_BORDER)), this.items.length);
             if (numColumns != this.grid.numColumns) { // Need to re-layout...
                 changed = true;
                 this.grid.rows=[];
@@ -1984,7 +2044,7 @@ var lmsBrowse = Vue.component("lms-browse", {
         this.pageElement = document.getElementById("browse-view");
         let timeout = undefined;
         window.addEventListener('resize', () => {
-            if (this.items.length>=(this.grid.use ? LMS_MIN_GRID_SCROLLER_ITEMS : LMS_MIN_LIST_SCROLLER_ITEMS)) {
+            if (this.items.length>LMS_MAX_NON_SCROLLER_ITEMS) {
                 if (timeout) {
                     clearTimeout(timeout);
                 }
@@ -2021,7 +2081,6 @@ var lmsBrowse = Vue.component("lms-browse", {
         this.checkFeature(["can", "cdplayer", "items", "?"], "cdPlayer", TOP_CDPLAYER_ID);
 
         bus.$on('browseDisplayChanged', function(act) {
-            this.options.useGrid=this.$store.state.useGrid;
             if (this.playerId() && this.$store.state.serverMenus) {
                 this.playerMenu();
             }

@@ -5,7 +5,7 @@
  * MIT license.
  */
 
-const PLAYER_STATUS_TAGS = "tags:cdeloyrstAKNS";
+const PLAYER_STATUS_TAGS = "tags:cdegloyrstAKNS";
 
 function getHiddenProp(){
     var prefixes = ['webkit','moz','ms','o'];
@@ -56,29 +56,34 @@ var lmsLastScan = undefined;
 var haveLocalAndroidPlayer = false;
 
 var currentIpAddress = undefined;
-var RTCPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
-if (RTCPeerConnection)(function() {
-    var rtc = new RTCPeerConnection({iceServers:[]});
-    rtc.createDataChannel('', {reliable: false});
-    rtc.onicecandidate = function(evt) {
-        if (evt.candidate) {
-            grepSdp(evt.candidate.candidate);
-        }
-    };
+if (isAndroid()) { // currently only need to check current IP address to detect SB player, and this is Android only.
+    try {
+        var RTCPeerConnection = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
+        if (RTCPeerConnection)(function() {
+            var rtc = new RTCPeerConnection({iceServers:[]});
+            rtc.createDataChannel('', {reliable: false});
+            rtc.onicecandidate = function(evt) {
+                if (evt.candidate) {
+                    grepSdp(evt.candidate.candidate);
+                }
+            };
 
-    rtc.createOffer(function(offerDesc) {
-        rtc.setLocalDescription(offerDesc);
-    }, function(e) { console.warn("Failed to get IP address", e); });
+            rtc.createOffer(function(offerDesc) {
+                rtc.setLocalDescription(offerDesc);
+            }, function(e) { console.warn("Failed to get IP address", e); });
 
-    function grepSdp(sdp) {
-        var ip = /(192\.168\.(0|\d{0,3})\.(0|\d{0,3}))/i;
-        sdp.split('\r\n').forEach(function(line) {
-            if (line.match(ip)) {
-                currentIpAddress = line.match(ip)[0];
+            function grepSdp(sdp) {
+                var ip = /(192\.168\.(0|\d{0,3})\.(0|\d{0,3}))/i;
+                sdp.split('\r\n').forEach(function(line) {
+                    if (line.match(ip)) {
+                        currentIpAddress = line.match(ip)[0];
+                    }
+                });
             }
-        });
+        })();
+    } catch(e) {
     }
-})();
+}
 
 const CancelToken = axios.CancelToken;
 var lmsListSource = undefined;
@@ -521,7 +526,7 @@ var lmsServer = Vue.component('lms-server', {
         }.bind(this));
 
         /* Add an event handler to be called when visibiity changes - so that we can immediately refresh status */
-        if (isMobile()) {
+        if (IS_MOBILE) {
             var prop = getHiddenProp();
             if (prop) {
                 document.addEventListener(prop.replace(/[H|h]idden/,'') + 'visibilitychange', visibilityChanged);

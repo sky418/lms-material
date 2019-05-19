@@ -56,9 +56,9 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
     <p class="np-text-desktop subtext ellipsis" v-else></p>
    </v-flex>
    <v-flex xs12>
-    <p class="np-text-sub-desktop subtext ellipsis" v-if="playerStatus.current.artist && playerStatus.current.album">{{playerStatus.current.artist}}{{SEPARATOR}}{{playerStatus.current.album}}</p>
-    <p class="np-text-sub-desktop subtext ellipsis" v-else-if="playerStatus.current.artist && playerStatus.current.remote_title && playerStatus.current.remote_title!=playerStatus.current.title">{{playerStatus.current.artist}}{{SEPARATOR}}{{playerStatus.current.remote_title}}</p>
-    <p class="np-text-sub-desktop subtext ellipsis" v-else-if="playerStatus.current.artist">{{playerStatus.current.artist}}</p>
+    <p class="np-text-sub-desktop subtext ellipsis" v-if="playerStatus.current.artistAndComposer && playerStatus.current.album">{{playerStatus.current.artistAndComposer}}{{SEPARATOR}}{{playerStatus.current.album}}</p>
+    <p class="np-text-sub-desktop subtext ellipsis" v-else-if="playerStatus.current.artistAndComposer && playerStatus.current.remote_title && playerStatus.current.remote_title!=playerStatus.current.title">{{playerStatus.current.artistAndComposer}}{{SEPARATOR}}{{playerStatus.current.remote_title}}</p>
+    <p class="np-text-sub-desktop subtext ellipsis" v-else-if="playerStatus.current.artistAndComposer">{{playerStatus.current.artistAndComposer}}</p>
     <p class="np-text-sub-desktop subtext ellipsis" v-else-if="playerStatus.current.album">{{playerStatus.current.album}}</p>
     <p class="np-text-sub-desktop subtext ellipsis" v-else-if="playerStatus.current.remote_title && playerStatus.current.remote_title!=playerStatus.current.title">{{playerStatus.current.remote_title}}</p>
     <p class="np-text-sub-desktop subtext ellipsis" v-else-if="playerStatus.current.title">&#x22ef;</p>
@@ -147,7 +147,7 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
    <div class="np-details-landscape">
     <div class="np-text-landscape np-title" v-if="playerStatus.current.title">{{title}}</div>
     <div class="np-text-landscape" v-else>&nbsp;</div>
-    <div class="np-text-landscape subtext" v-if="playerStatus.current.artist">{{playerStatus.current.artist}}</div>
+    <div class="np-text-landscape subtext" v-if="playerStatus.current.artistAndComposer">{{playerStatus.current.artistAndComposer}}</div>
     <div class="np-text-landscape" v-else>&nbsp;</div>
     <div class="np-text-landscape subtext" v-if="playerStatus.current.album">{{playerStatus.current.album}}</div>
     <div class="np-text-landscape subtext" v-else-if="playerStatus.current.remote_title && playerStatus.current.remote_title!=playerStatus.current.title">{{playerStatus.current.remote_title}}</div>
@@ -207,7 +207,7 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
   <div v-else>
    <p class="np-text np-title ellipsis" v-if="playerStatus.current.title">{{title}}</p>
    <p class="np-text" v-else>&nbsp;</p>
-   <p class="np-text subtext ellipsis" v-if="playerStatus.current.artist">{{playerStatus.current.artist}}</p>
+   <p class="np-text subtext ellipsis" v-if="playerStatus.current.artistAndComposer">{{playerStatus.current.artistAndComposer}}</p>
    <p class="np-text" v-else>&nbsp;</p>
    <p class="np-text subtext ellipsis" v-if="playerStatus.current.album">{{playerStatus.current.album}}</p>
    <p class="np-text subtext ellipsis" v-else-if="playerStatus.current.remote_title && playerStatus.current.remote_title!=playerStatus.current.title">{{playerStatus.current.remote_title}}</p>
@@ -266,11 +266,11 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
 </div></div>
 `,
     data() {
-        return { coverUrl:undefined,
+        return { coverUrl:LMS_BLANK_COVER,
                  playerStatus: {
                     isplaying: false,
                     sleepTimer: false,
-                    current: { canseek:1, duration:0, time:undefined, title:undefined, artist:undefined,
+                    current: { canseek:1, duration:0, time:undefined, title:undefined, artist:undefined, artistAndComposer: undefined,
                                album:undefined, albumName:undefined, technicalInfo: "", pospc:0.0, tracknum:undefined },
                     playlist: { shuffle:0, repeat: 0 },
                  },
@@ -364,6 +364,15 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
                 this.playerStatus.current.remote_title = playerStatus.current.remote_title;
                 trackChanged = true;
             }
+            var artistAndComposer;
+            if (playerStatus.current.composer && playerStatus.current.genre && COMPOSER_GENRES.has(playerStatus.current.genre)) {
+                artistAndComposer = addPart(this.playerStatus.current.artist, playerStatus.current.composer);
+            } else {
+                artistAndComposer = this.playerStatus.current.artist;
+            }
+            if (artistAndComposer!=this.playerStatus.current.artistAndComposer) {
+                this.playerStatus.current.artistAndComposer = artistAndComposer;
+            }
             if (playerStatus.playlist.shuffle!=this.playerStatus.playlist.shuffle) {
                 this.playerStatus.playlist.shuffle = playerStatus.playlist.shuffle;
             }
@@ -423,7 +432,7 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
         }.bind(this));
 
         bus.$on('currentCover', function(coverUrl) {
-            this.coverUrl = coverUrl;
+            this.coverUrl = undefined==coverUrl ? LMS_BLANK_COVER : coverUrl;
             this.setBgndCover();
         }.bind(this));
         bus.$emit('getCurrentCover');
@@ -457,7 +466,7 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
         },
         showMenu(event) {
             event.preventDefault();
-            if (this.coverUrl) {
+            if (this.coverUrl && this.coverUrl!=LMS_BLANK_COVER) {
                 this.menu.show = false;
                 this.menu.x = event.clientX;
                 this.menu.y = event.clientY;
@@ -641,7 +650,7 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
             this.$nextTick(function () {
                 var elem = document.getElementById("np-info");
                 if (elem) {
-                    elem.style.backgroundImage = "url('"+(this.$store.state.infoBackdrop ? this.coverUrl : "") +"')";
+                    elem.style.backgroundImage = "url('"+(this.$store.state.infoBackdrop && this.coverUrl!=LMS_BLANK_COVER ? this.coverUrl : "") +"')";
                 }
             });
             if (this.$store.state.desktop && !this.showTabs) {
@@ -682,8 +691,8 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
             setLocalStorageVal("showTotal", this.showTotal);
         },
         setBgndCover() {
-            if (this.page && (!this.$store.state.desktop || this.largeView)) {
-                setBgndCover(this.page, this.$store.state.nowPlayingBackdrop ? this.coverUrl : undefined, this.$store.state.darkUi);
+            if (this.page && (!this.desktop || this.largeView)) {
+                setBgndCover(this.page, this.$store.state.nowPlayingBackdrop && this.coverUrl!=LMS_BLANK_COVER ? this.coverUrl : undefined, this.$store.state.darkUi);
             }
         },
         playPauseButton(showSleepMenu) {
@@ -807,7 +816,7 @@ var lmsNowPlaying = Vue.component("lms-now-playing", {
         },
         title() {
             if (this.$store.state.nowPlayingTrackNum && this.playerStatus.current.tracknum) {
-                return (this.playerStatus.current.tracknum>9 ? this.playerStatus.current.tracknum : ("0" + this.playerStatus.current.tracknum))+" "+this.playerStatus.current.title;
+                return (this.playerStatus.current.tracknum>9 ? this.playerStatus.current.tracknum : ("0" + this.playerStatus.current.tracknum))+SEPARATOR+this.playerStatus.current.title;
             }
             return this.playerStatus.current.title;
         },

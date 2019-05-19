@@ -6,14 +6,13 @@
  */
 
 var autoLayout = false;
-var isMobileBrowser = false;
 var landscape = undefined;
 var wide = undefined;
 function checkLayout(currentlyIsDesktopLayout) {
     if (autoLayout && !isMobileBrowser) { // auto-layout broken on iPad #109
         if (window.innerWidth<600 && currentlyIsDesktopLayout) {
             bus.$emit("setDesktopLayout", false);
-        } else if (window.innerWidth>=600 && /*(!isMobileBrowser || window.innerHeight>=600) &&*/ !currentlyIsDesktopLayout) {
+        } else if (window.innerWidth>=600 && /*(!IS_MOBILE || window.innerHeight>=600) &&*/ !currentlyIsDesktopLayout) {
             bus.$emit("setDesktopLayout", true);
         }
     }
@@ -32,7 +31,7 @@ function setAutoLayout(al, currentlyIsDesktopLayout) {
 }
 
 function checkEntryFocus() {
-    if (isMobileBrowser && (document.activeElement.tagName=="INPUT" || document.activeElement.tagName=="TEXTAREA")) {
+    if (IS_MOBILE && (document.activeElement.tagName=="INPUT" || document.activeElement.tagName=="TEXTAREA")) {
         ensureVisible(document.activeElement);
     }
 }
@@ -43,9 +42,7 @@ function initApp(app) {
         setTranslation(JSON.parse(storedTrans));
     }
 
-    isMobileBrowser = isMobile();
-
-    if (isMobileBrowser) {
+    if (IS_MOBILE) {
         try { // Fails on mobile Firefox - "addRule is not a function"
             document.styleSheets[0].addRule("::-webkit-scrollbar", "max-height: 0px !important; max-width: 0px !important;");
         } catch(e) {

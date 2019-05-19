@@ -64,15 +64,6 @@ Vue.component('lms-ui-settings', {
 
     <div class="dialog-padding"></div>
     <v-header>{{i18n('Browse')}}</v-header>
-    <v-list-tile>
-     <v-select :items="albumSorts" :label="i18n('Sort albums under artists by')" v-model="artistAlbumSort" item-text="label" item-value="key"></v-select>
-    </v-list-tile>
-    <v-divider></v-divider>
- 
-    <v-list-tile>
-     <v-select :items="albumSorts" :label="i18n('Sort album list by')" v-model="albumSort" item-text="label" item-value="key"></v-select>
-    </v-list-tile>
-    <v-divider></v-divider>
 
     <v-list-tile v-if="libraries.length>0">
      <v-select :items="libraries" :label="i18n('Library')" v-model="library" item-text="name" item-value="id"></v-select>
@@ -80,16 +71,12 @@ Vue.component('lms-ui-settings', {
     <v-divider v-if="libraries.length>0"></v-divider>
 
     <v-list-tile>
-     <v-select :items="gridItems" :label="i18n('Display items in a grid')" v-model="useGrid" item-text="label" item-value="key"></v-select>
+     <v-select :items="albumSorts" :label="i18n('Sort albums under artists by')" v-model="artistAlbumSort" item-text="label" item-value="key"></v-select>
     </v-list-tile>
     <v-divider></v-divider>
-
+ 
     <v-list-tile>
-     <v-list-tile-content @click="splitArtistsAndAlbums = !splitArtistsAndAlbums" class="switch-label">
-      <v-list-tile-title>{{i18n('Split artist (and album) lists into A..Z')}}</v-list-tile-title>
-      <v-list-tile-sub-title>{{i18n('Useful when browsing a large list of artists, or albums.')}}</v-list-tile-title>
-     </v-list-tile-content>
-     <v-list-tile-action><v-switch v-model="splitArtistsAndAlbums"></v-switch></v-list-tile-action>
+     <v-select :items="albumSorts" :label="i18n('Sort album list by')" v-model="albumSort" item-text="label" item-value="key"></v-select>
     </v-list-tile>
     <v-divider></v-divider>
 
@@ -219,8 +206,6 @@ Vue.component('lms-ui-settings', {
             darkUi: true,
             artistAlbumSort:'yearalbum',
             albumSort:'album',
-            splitArtistsAndAlbums: false,
-            useGrid:'albums',
             gridItems: [],
             letterOverlay:false,
             showMenuAudio:false,
@@ -271,8 +256,6 @@ Vue.component('lms-ui-settings', {
             this.techInfo = this.$store.state.techInfo;
             this.queueShowTrackNum = this.$store.state.queueShowTrackNum;
             this.nowPlayingTrackNum = this.$store.state.nowPlayingTrackNum;
-            this.splitArtistsAndAlbums = this.$store.state.splitArtistsAndAlbums;
-            this.useGrid=this.$store.state.useGrid;
             this.lsAndNotif=this.$store.state.lsAndNotif;
             this.letterOverlay=this.$store.state.letterOverlay;
             this.serverMenus = this.$store.state.serverMenus;
@@ -350,8 +333,6 @@ Vue.component('lms-ui-settings', {
                                                   artistAlbumSort:this.artistAlbumSort,
                                                   albumSort:this.albumSort,
                                                   autoScrollQueue:this.autoScrollQueue,
-                                                  splitArtistsAndAlbums:this.splitArtistsAndAlbums,
-                                                  useGrid:this.useGrid,
                                                   letterOverlay:this.letterOverlay,
                                                   showMenuAudio:this.showMenuAudio,
                                                   serverMenus:this.serverMenus,
@@ -383,8 +364,6 @@ Vue.component('lms-ui-settings', {
                                      artistAlbumSort:this.artistAlbumSort,
                                      albumSort:this.albumSort,
                                      autoScrollQueue:this.autoScrollQueue,
-                                     splitArtistsAndAlbums:this.splitArtistsAndAlbums,
-                                     useGrid:this.useGrid,
                                      letterOverlay:this.letterOverlay,
                                      showMenuAudio:this.showMenuAudio,
                                      serverMenus:this.serverMenus,
