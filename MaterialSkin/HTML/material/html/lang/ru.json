@@ -678,9 +678,9 @@
 "%1 Years":"%1 Лет",
 "1 day":"1 день",
 "%1 days":"%1 дней(я)",
-"Main Menu":"",
-"Only scroll player list, keep settings (and shortcuts) visible at bottom.":"",
-"Settings (and shortcuts) always visible":"",
-"Use a row of icons, and not a list of text, for settings entries.":"",
-"Use icons for settings":""
+"Main Menu":"Основное Меню",
+"Only scroll player list, keep settings (and shortcuts) visible at bottom.":"Прокрутите только список плееров, оставьте необходимые настройки (ярлыки).",
+"Settings (and shortcuts) always visible":"Всегда видеть настройки (ярлыки)",
+"Use a row of icons, and not a list of text, for settings entries.":"Для выбора настроек используйте иконоки, а не текст.",
+"Use icons for settings":"Для выбора используйте иконки"
 }
